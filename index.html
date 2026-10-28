@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mô phỏng đồ thị</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- ===== MÀN HÌNH 1: CHỌN LOẠI ĐỒ THỊ (5 nút do js/ui.js tạo vào #loaiGrid) ===== -->
+    <div id="chonLoai">
+        <div class="chon-box">
+            <h2> MÔ PHỎNG ĐỒ THỊ</h2>
+            <p class="chon-mo-ta">Hãy chọn loại đồ thị để bắt đầu</p>
+            <p class="chon-sub">Nhập dữ liệu và quan sát đồ thị trực quan ngay trên trình duyệt</p>
+            <div class="loai-grid" id="loaiGrid"></div>
+        </div>
+    </div>
+
+    <!-- ===== MÀN HÌNH 2: MÀN HÌNH CHÍNH (hiện sau khi chọn loại) ===== -->
+    <div id="manHinhChinh">
+        <h1> MÔ PHỎNG ĐỒ THỊ</h1>
+        <div class="selected-type">
+            Đang chọn: <span id="loaiDangChon">Chưa chọn</span>
+        </div>
+        <div class="container">
+            <!-- ---- CỘT TRÁI: KHUNG ĐIỀU KHIỂN ---- -->
+            <div class="control">
+                <h2> Điều khiển</h2>
+
+                <!-- [Mục] Lưu / Reset (storage.js): đồ thị tự động lưu; Reset để về ban đầu -->
+                <div class="save-row">
+                    <button class="success" onclick="luuNgay(true)">💾 Lưu</button>
+                    <button class="danger" onclick="resetDoThi()">↺ Reset</button>
+                </div>
+                <div class="save-status" id="luuTrangThai">Đồ thị được tự động lưu</div>
+                <label>Loại đồ thị:</label>
+                <select id="loai" onchange="hienThiThongTin()"></select>
+
+                <!-- [Mục] Đổi giao diện: Light / Premium / Neon (chonGiaoDien trong ui.js) -->
+                <div class="theme-switch">
+                    <button class="theme-btn active" id="lightThemeBtn" onclick="chonGiaoDien('light')">☀️ Light</button>
+                    <button class="theme-btn" id="premiumThemeBtn" onclick="chonGiaoDien('premium')">✨ Premium</button>
+                    <button class="theme-btn" id="darkThemeBtn" onclick="chonGiaoDien('dark')">🌙 Neon</button>
+                </div>
+
+                <!-- [Mục] Chọn màu đỉnh, cạnh, viền, glow (apDungMauDoThi trong ui.js) -->
+                <div class="color-row">
+                    <div class="color-box"><label for="nodeColor">Màu đỉnh</label><input type="color" id="nodeColor" value="#60a5fa"></div>
+                    <div class="color-box"><label for="edgeColor">Màu cạnh</label><input type="color" id="edgeColor" value="#2563eb"></div>
+                </div>
+                <div class="color-row">
+                    <div class="color-box"><label for="nodeBorderColor">Viền đỉnh</label><input type="color" id="nodeBorderColor" value="#0f172a"></div>
+                    <div class="color-box"><label for="edgeGlowColor">Glow cạnh</label><input type="color" id="edgeGlowColor" value="#93c5fd"></div>
+                </div>
+                <button class="info" onclick="apDungMauDoThi()" style="margin-top: 12px;">🎨 Áp dụng màu đồ thị</button>
+
+                <!-- [Mục] Tạo đồ thị mới: nhập số đỉnh, số cạnh (taoDoThi trong edges.js) -->
+                <label>Số đỉnh:</label>
+                <input type="number" id="soDinh" min="1" value="5">
+                <label>Số cạnh:</label>
+                <input type="number" id="soCanh" min="0" value="5">
+                <button onclick="taoDoThi()">Tạo đồ thị</button>
+                <div class="note tip">
+                    Hướng dẫn: nhập cạnh dạng x y hoặc x y w (w là trọng số), số hiệu đỉnh từ 0 đến n−1.
+                </div>
+                <hr>
+
+                <!-- [Mục] Thêm cạnh (themCanh) -->
+                <h3>➕ Thêm cạnh</h3>
+                <input type="number" id="themX" placeholder="Đỉnh x">
+                <input type="number" id="themY" placeholder="Đỉnh y">
+                <input type="number" id="themW" step="any" placeholder="Trọng số w (có thể bỏ trống)">
+                <button class="success" onclick="themCanh()">Thêm cạnh</button>
+                <div class="note hint">Ví dụ: 0 1 để nối đỉnh 0 với đỉnh 1.</div>
+
+                <!-- [Mục] Xóa cạnh (xoaCanh) -->
+                <h3>🗑️ Xóa cạnh</h3>
+                <input type="number" id="xoaX" placeholder="Đỉnh x">
+                <input type="number" id="xoaY" placeholder="Đỉnh y">
+                <button class="danger" onclick="xoaCanh()">Xóa cạnh</button>
+
+                <!-- [Mục] Sửa cạnh (suaCanh) -->
+                <h3>✏️ Sửa cạnh</h3>
+                <input type="number" id="cuX" placeholder="Đỉnh x cũ">
+                <input type="number" id="cuY" placeholder="Đỉnh y cũ">
+                <input type="number" id="moiX" placeholder="Đỉnh x mới">
+                <input type="number" id="moiY" placeholder="Đỉnh y mới">
+                <input type="number" id="moiW" step="any" placeholder="Trọng số mới (bỏ trống = giữ cũ)">
+                <button onclick="suaCanh()">Sửa cạnh</button>
+
+                <button class="info" onclick="sapXep()">🔄 Sắp xếp lại</button>
+                <hr>
+
+                <!-- [Mục] Bài toán người phát thư (giaiNguoiPhatThu trong postman.js) -->
+                <h3>📮 Bài toán người phát thư</h3>
+                <div class="note hint">Tìm hành trình ngắn nhất đi qua mọi cạnh rồi quay về (đồ thị vô hướng). Cạnh không có trọng số tính w = 1.</div>
+                <button class="success" onclick="giaiNguoiPhatThu()">📮 Phân tích &amp; giải bài toán</button>
+            </div>
+
+            <!-- ---- CỘT PHẢI: VÙNG ĐỒ THỊ ----
+                 svg = hình vẽ đồ thị (draw.js) | #thongTin = đỉnh/cạnh, bậc, DANH SÁCH KỀ, ma trận (info.js) -->
+            <div class="graph-area">
+                <svg id="svg"></svg>
+                <div id="thongTin">Chưa có đồ thị</div>
+                <div class="note foot">Có thể kéo trực tiếp các đỉnh trên màn hình.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NẠP SCRIPT (KHÔNG ĐỔI THỨ TỰ): config -> state -> validate -> ui -> edges -> draw -> matrix -> list -> euler -> postman -> info -> storage ===== -->
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/validate.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/edges.js"></script>
+    <script src="js/draw.js"></script>
+    <script src="js/matrix.js"></script>
+    <script src="js/list.js"></script>   <!-- MỚI: danh sách kề -->
+    <script src="js/euler.js"></script>  <!-- MỚI: chu trình Euler -->
+    <script src="js/postman.js"></script>  <!-- MỚI: bài toán người phát thư -->
+    <script src="js/giai.js"></script>   <!-- MỚI: cách giải chi tiết cho từng mục -->
+    <script src="js/info.js"></script>
+    <script src="js/storage.js"></script>  <!-- MỚI: tự động lưu / khôi phục / reset (nạp sau cùng) -->
+
+    <!-- ===== HIỆU ỨNG NỀN: phi kiếm bay (chỉ trang trí, không liên quan đồ thị) ===== -->
+    <!-- Nền: 8 thanh phi kiếm (màn chọn loại) + 4 thanh bay ngang (màn chính); gốc: 12 (cùng kiểu kiếm của Luu_Tru_Ca_Nhan), 6 màu, bay phía sau, xuyên qua lớp kính mờ của khung đồ thị -->
+    <canvas id="swordBg" aria-hidden="true" style="position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none"></canvas>
+    <script>
+    (function () {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var cv = document.getElementById('swordBg'), ctx = cv.getContext('2d');
+        var COUNT = 8;                           // tổng số kiếm
+        var HUES = [0, 55, 110, 170, 230, 290];  // 6 màu: xoay màu gốc (xanh lơ) đi từng góc này, mỗi màu 2 kiếm
+        var SPEED_MIN = 350, SPEED_MAX = 600;    // px/giây
+        var SIZE = 128, THICK = .68, TRAIL = 12;   // cỡ kiếm, độ dày khi bay, độ dài vệt
+        var W = 0, H = 0, S = [], last = 0, sprites = [], ready = false;
+        var D = 1, PAD = 14, LR = null, wasH = false;   // D: tỉ lệ điểm ảnh; PAD: lề chứa quầng sáng; LR: dải bay ngang đã lưu sẵn
+        var HCOUNT = 4, HS = [];                 // kiếm bay ngang đầu trang (chỉ ở màn hình chính)
+
+        /* Màu: xoay sắc độ (giống CSS hue-rotate) cho từng màu trong kiếm gốc */
+        function rot(hex, deg) {
+            var n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+            var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, h = 0, s = 0, d = mx - mn;
+            if (d) {
+                s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+                h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+                h *= 60;
+            }
+            h = (h + deg) % 360;
+            function f(p, q, t) { t = (t + 360) % 360; return t < 60 ? p + (q - p) * t / 60 : t < 180 ? q : t < 240 ? p + (q - p) * (240 - t) / 60 : p; }
+            var q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+            function hx(v) { v = Math.round(v * 255).toString(16); return v.length < 2 ? '0' + v : v; }
+            return s ? '#' + hx(f(p, q, h + 120)) + hx(f(p, q, h)) + hx(f(p, q, h - 120)) : hex;
+        }
+        /* Kiếm gốc (đúng hình, đúng màu và độ sáng của logo hai kiếm), vẽ sẵn thành ảnh cho từng màu */
+        function swordSvg(d, px) {
+            var c = function (x) { return rot(x, d); };
+            return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="' + px + '" height="' + px + '"><defs>' +
+              '<linearGradient id="a" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="' + c('#7dd3fc') + '"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="' + c('#38bdf8') + '"/></linearGradient>' +
+              '<linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="' + c('#6d28d9') + '"/><stop offset=".5" stop-color="' + c('#22d3ee') + '"/><stop offset="1" stop-color="' + c('#6d28d9') + '"/></linearGradient>' +
+              '<linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + c('#22d3ee') + '"/><stop offset=".55" stop-color="' + c('#8b5cf6') + '"/><stop offset="1" stop-color="' + c('#f0abfc') + '"/></linearGradient>' +
+              '<linearGradient id="p" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="' + c('#0b1633') + '"/><stop offset=".5" stop-color="' + c('#1d3a78') + '"/><stop offset="1" stop-color="' + c('#0b1633') + '"/></linearGradient>' +
+              '<radialGradient id="m" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="' + c('#67e8f9') + '"/><stop offset="1" stop-color="' + c('#0891b2') + '"/></radialGradient>' +
+              '<filter id="s" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' +
+              '<g transform="translate(256 256) scale(' + THICK + ' 1) translate(-256 -256) translate(0 21)">' +
+              '<polygon points="256,52 272,110 272,300 240,300 240,110" fill="url(#a)" stroke="#fff" stroke-opacity=".9" stroke-width="2" stroke-linejoin="round" filter="url(#s)"/>' +
+              '<line x1="256" y1="88" x2="256" y2="294" stroke="' + c('#0891b2') + '" stroke-width="3" stroke-linecap="round"/>' +
+              '<polygon points="204,308 236,296 276,296 308,308 294,324 218,324" fill="url(#g)" stroke="#0a1330" stroke-width="3" stroke-linejoin="round"/>' +
+              '<circle cx="256" cy="310" r="6" fill="url(#m)"/>' +
+              '<rect x="247" y="324" width="18" height="68" rx="5" fill="url(#p)" stroke="' + c('#22d3ee') + '" stroke-width="2.2"/>' +
+              '<polygon points="256,394 268,401 268,415 256,422 244,415 244,401" fill="#0a1330" stroke="url(#r)" stroke-width="3" stroke-linejoin="round"/>' +
+              '</g></svg>';
+        }
+        function loadSprites(done) {
+            var left = HUES.length, bk = Math.min(window.devicePixelRatio || 1, 1.5), px = Math.ceil(SIZE * bk);
+            HUES.forEach(function (d, i) {
+                var im = new Image();
+                im.onload = function () {
+                    /* Vẽ kiếm + quầng sáng MỘT lần vào canvas phụ; mỗi khung hình chỉ cần drawImage (không còn shadowBlur) */
+                    var c = document.createElement('canvas'), g = c.getContext('2d');
+                    c.width = c.height = Math.ceil((SIZE + PAD * 2) * bk);
+                    g.shadowColor = GLOW[i]; g.shadowBlur = 10 * bk;
+                    g.drawImage(im, PAD * bk, PAD * bk, px, px);
+                    sprites[i] = c;
+                    if (!--left) done();
+                };
+                im.onerror = function () { if (!--left && sprites.some(Boolean)) done(); };
+                im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(swordSvg(d, px));
+            });
+        }
+        var GLOW = ['#22d3ee', '#818cf8', '#e879f9', '#f87171', '#facc15', '#4ade80'];   // màu quầng sáng và vệt theo từng màu kiếm
+        function resize() {
+            D = Math.min(window.devicePixelRatio || 1, 1.5);   // giới hạn 1.5 cho nhẹ
+            W = innerWidth; H = innerHeight;
+            cv.width = Math.round(W * D); cv.height = Math.round(H * D);
+            ctx.setTransform(D, 0, 0, D, 0, 0);
+        }
+        function rnd(a, b) { return a + Math.random() * (b - a); }
+        function init() {
+            resize(); S = [];
+            for (var i = 0; i < COUNT; i++) {
+                var k = i % HUES.length;
+                S.push({ x: rnd(0, W), y: rnd(0, H), a: rnd(0, 6.2832), v: rnd(SPEED_MIN, SPEED_MAX), w: 0, wn: 0, wt: 0, bias: Math.random() < .5 ? -1 : 1, k: k, col: GLOW[k], pts: [] });
+            }
+        }
+        /* Kiếm bay ngang: chạy thẳng từ mép này sang mép kia, nằm sau chữ tiêu đề, trong dải từ đỉnh trang đến khung đồ thị */
+        function laneRange() {
+            if (LR) return LR;      // lưu sẵn, chỉ đo lại khi đổi cỡ cửa sổ / vừa vào màn hình chính (tránh đo layout mỗi khung hình)
+            var c = document.querySelector('.container'), h1 = document.querySelector('#manHinhChinh h1');
+            var bottom = c ? c.getBoundingClientRect().top : 240, top = h1 ? h1.getBoundingClientRect().top : 20;
+            top = Math.max(SIZE * .3, top - 10); bottom = Math.max(top + 40, bottom - SIZE * .25);
+            return (LR = [top, bottom]);
+        }
+        function initH() {
+            var r = laneRange(); HS = [];
+            for (var i = 0; i < HCOUNT; i++) {
+                var dir = i % 2 ? -1 : 1, k = (i * 5 + 1) % HUES.length;
+                HS.push({ x: (i + .5) / HCOUNT * W, lane: i / (HCOUNT - 1), dir: dir, v: rnd(260, 480), k: k, col: GLOW[k], pts: [] });
+            }
+        }
+        function stepH(o, dt) {
+            var r = laneRange(), y = r[0] + o.lane * (r[1] - r[0]);
+            o.y = y + Math.sin(o.x / 140 + o.lane * 9) * 6;       // lượn nhẹ cho mềm mại
+            o.a = o.dir > 0 ? 0 : Math.PI;
+            o.x += o.dir * o.v * dt;
+            var out = SIZE;
+            if (o.dir > 0 && o.x > W + out) { o.x = -out; o.pts = []; }
+            else if (o.dir < 0 && o.x < -out) { o.x = W + out; o.pts = []; }
+            var bx = o.x - Math.cos(o.a) * SIZE * .3, by = o.y;
+            o.pts.push(bx, by); if (o.pts.length > TRAIL * 2) o.pts.splice(0, 2);
+        }
+        var WMAX = 3.2, DW = 24;          // tốc độ bẻ lái tối đa (rad/giây) và độ nhạy đổi hướng: bẻ từ từ, không giật
+        function step(o, dt) {
+            var m = SIZE * .35, Z = Math.min(o.v / WMAX * 1.7, Math.min(W, H) * .24);   // vùng báo tường: bắt đầu cua từ xa
+            var hx = Math.cos(o.a), hy = Math.sin(o.a), vx = 0, vy = 0, t;
+            t = (Z - (o.x - m)) / Z; if (t > 0) vx += Math.min(t, 1);        // lực đẩy khỏi 4 mép, mạnh dần khi tới gần
+            t = (Z - (W - m - o.x)) / Z; if (t > 0) vx -= Math.min(t, 1);
+            t = (Z - (o.y - m)) / Z; if (t > 0) vy += Math.min(t, 1);
+            t = (Z - (H - m - o.y)) / Z; if (t > 0) vy -= Math.min(t, 1);
+            var vm = Math.hypot(vx, vy);
+            o.wt -= dt;
+            if (o.wt <= 0) { o.wn = rnd(-1.4, 1.4); o.wt = rnd(.5, 1.4); }   // uốn lượn nhẹ nhàng khi ở chỗ thoáng
+            var target = o.wn;
+            if (vm > 0) {
+                var cr = hx * vy - hy * vx, dot = hx * vx + hy * vy;
+                var avoid = WMAX * Math.max(-1, Math.min(1, 3 * cr + 3 * o.bias * Math.max(0, -dot)));   // đối đầu tường thì rẽ về một bên đã chọn
+                var ww = Math.min(1, vm * 9);
+                target = o.wn * (1 - ww) + avoid * ww;
+            }
+            target = Math.max(-WMAX, Math.min(WMAX, target));
+            var dw = DW * dt; o.w += Math.max(-dw, Math.min(dw, target - o.w));   // tốc độ xoay đổi từ từ: không có góc gấp
+            o.a += o.w * dt;
+            var sp = o.v * (1 - .45 * Math.min(1, vm * 1.5));   // gần tường thì chậm lại một chút để cua gọn hơn
+            o.x += Math.cos(o.a) * sp * dt; o.y += Math.sin(o.a) * sp * dt;
+            var e = SIZE * .3;             // chỉ để phòng hờ khi đổi cỡ cửa sổ đột ngột
+            if (o.x < e) o.x = e; else if (o.x > W - e) o.x = W - e;
+            if (o.y < e) o.y = e; else if (o.y > H - e) o.y = H - e;
+            var bx = o.x - Math.cos(o.a) * SIZE * .3, by = o.y - Math.sin(o.a) * SIZE * .3;   // vệt bám phía sau chuôi kiếm
+            o.pts.push(bx, by); if (o.pts.length > TRAIL * 2) o.pts.splice(0, 2);
+        }
+        function drawTrail(o) {
+            var p = o.pts, n = p.length / 2;
+            ctx.lineCap = 'round';
+            for (var k = Math.max(1, Math.floor(n * .25)); k < n; k++) {   // bỏ phần đuôi quá mờ, mắt thường không thấy
+                var u = k / n, x0 = p[k * 2 - 2], y0 = p[k * 2 - 1], x1 = p[k * 2], y1 = p[k * 2 + 1];
+                ctx.strokeStyle = o.col; ctx.globalAlpha = .4 * u * u; ctx.lineWidth = 3 + 10 * u;      // quầng sáng
+                ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+                ctx.strokeStyle = '#fff'; ctx.globalAlpha = .6 * u * u; ctx.lineWidth = 1 + 3 * u;       // lõi sáng mảnh
+                ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+        function drawSword(o) {
+            var sp = sprites[o.k]; if (!sp) return;
+            var t = o.a + Math.PI / 2, c = Math.cos(t) * D, sn = Math.sin(t) * D, hf = SIZE / 2 + PAD;   // mũi kiếm hướng về phía bay
+            ctx.setTransform(c, sn, -sn, c, o.x * D, o.y * D);
+            ctx.drawImage(sp, -hf, -hf, hf * 2, hf * 2);
+        }
+        function frame(now) {
+            requestAnimationFrame(frame);
+            if (document.hidden) { last = now; return; }
+            var dt = Math.min(.05, (now - last) / 1000 || .016); last = now;
+            var i;
+            var mc = document.getElementById('manHinhChinh'), showH = mc && mc.style.display === 'flex';
+            if (showH && !wasH) { LR = null; setTimeout(function () { LR = null; }, 700); }   // đo lại dải bay sau khi hiệu ứng hiện khung xong
+            wasH = showH;
+            var A = showH ? HS : S;          // màn hình chính: chỉ kiếm bay ngang; màn hình chọn loại: kiếm bay tự do
+            for (i = 0; i < A.length; i++) (showH ? stepH : step)(A[i], dt);
+            ctx.setTransform(D, 0, 0, D, 0, 0);
+            ctx.clearRect(0, 0, W, H);
+            for (i = 0; i < A.length; i++) drawTrail(A[i]);
+            for (i = 0; i < A.length; i++) drawSword(A[i]);
+        }
+        addEventListener('resize', function () { resize(); LR = null; });
+        init(); initH();
+        loadSprites(function () { requestAnimationFrame(function (t) { last = t; requestAnimationFrame(frame); }); });
+    })();
+    </script>
+</body>
+
+</html>
